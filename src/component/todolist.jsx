@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function Todolist() {
 
@@ -7,6 +7,7 @@ export default function Todolist() {
     const [ editingId , setEditingId ] = useState(null);
     const [ editingContent, setEditingContent ] = useState('');
     const [ sortOrder, setSortOrder ] = useState('newest');
+    const [ filter, setFilter ] = useState('all');
 
     const createTodo = () => {
         if (newTodoContent !== '') {
@@ -37,7 +38,7 @@ export default function Todolist() {
                         dueTime: isNowCompleted ? new Date() : null
                     };
                 }
-                return todo
+                return todo;
             })
         );
     };
@@ -69,8 +70,8 @@ export default function Todolist() {
         );
     };
     
-    const getSortedTodos = () => {
-        const sorted = [...todos];
+    const getSortedTodos = (todosToSort) => {
+        const sorted = [...todosToSort];
 
         switch (sortOrder) {
             case 'dueTime-asc':
@@ -93,6 +94,9 @@ export default function Todolist() {
             case 'ko-desc':
                 sorted.sort((a,b) => b.content.localeCompare(a.content));
                 break;
+            case 'newest':
+                sorted.sort((a,b) => b.createdAt - a.createdAt);
+                break;
             default:
                 break;
         }
@@ -103,7 +107,13 @@ export default function Todolist() {
         setSortOrder(e.target.value);
     }
 
-    const sortedTodos = getSortedTodos(); 
+    const filterTodos = todos.filter(todo => {
+        if (filter === "completed") return todo.isCompleted;
+        if (filter === "incompleted") return !todo.isCompleted;
+        return true;
+    });
+
+    const sortedAndFilteredTodos = getSortedTodos(filterTodos); 
 
     return(
         <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -120,7 +130,16 @@ export default function Todolist() {
                     <button onClick={createTodo} className="bg-white shadow-md rounded px-4 py-1 mx-2 hover:bg-blue-300">생성</button>
 
                     <div className="mt-4">
-                        <strong>정렬: </strong>
+                        <select
+                            onChange={(e) => setFilter(e.target.value)}
+                            value={filter}
+                            className="border rounded p-1 mr-4"
+                        >
+                            <option value="all">전체</option>
+                            <option value="completed">완료</option>
+                            <option value="incompleted">미완료</option>
+                        </select>
+
                         <select
                             onChange={changeSort}
                             value={sortOrder}
@@ -135,7 +154,7 @@ export default function Todolist() {
                     </div>
                 </div>
                 <ul className="space-y-4">
-                    {sortedTodos.map(todo => (
+                    {sortedAndFilteredTodos.map(todo => (
                         <li key={todo.id} className="border rounded p-3 ">
                             <div className="flex items-center">
                                 <input
